@@ -1,0 +1,70 @@
+'''
+Imports relevant packages
+'''
+import csv
+import pandas as pd
+from twython import Twython  
+
+'''
+Insert authorisation keys here
+'''
+consumer_key = [insert consumer key]
+consumer_secret = [insert consumer secret]
+access_token_key = [insert access token]
+access_token_secret = [insert access secret]
+
+python_tweets = Twython(consumer_key, consumer_secret)
+
+'''
+Insert search parameters here
+'''
+# geocode is currently set to Masjid Jamek in Kuala Lumpur, Malaysia
+query = {'geocode': '3.1489,101.6956,1km',
+         'count': 100
+        }
+
+'''
+Builds a dictionary to store specific features scraped from the user
+'''
+dict_ = {'user': [],
+         'date': [],
+         'text': [],
+         'name': [],
+         'geo_enabled': [],
+         'bounding box':[],
+         'language':[],
+         'coordinates':[]
+        }
+
+'''
+Sifts through the data downloaded, pulls out, and adds the desired features
+'''
+for status in python_tweets.search(**query)['statuses']:
+    dict_['date'].append(status['created_at'])
+    dict_['geo_enabled'].append(status['user']['geo_enabled'])
+    dict_['user'].append(status['user']['screen_name'])
+    dict_['name'].append(status['user']['name'])
+    dict_['text'].append(status['text'])
+    dict_['language'].append(status['lang'])
+    dict_['coordinates'].append(status['coordinates'])
+    if 'place' in status:
+        if status['place']['bounding_box']:
+            dict_['bounding box'].append(status['place']['bounding_box']['coordinates'])
+    else:
+        dict_['bounding box'].append('not shown')
+
+'''
+Structures the data for easy manipulation
+'''
+df = pd.DataFrame(dict_)  
+df.sort_values(by='date', inplace=True, ascending=False)  
+
+'''
+Opens, writes into, and closes the results file
+'''
+csvFile = open('results.csv', 'a')
+
+with open('results.csv', 'a') as csvFile:
+    df.to_csv(csvFile, header=False, encoding='utf-8')
+
+csvFile.close()
