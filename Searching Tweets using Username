@@ -1,0 +1,87 @@
+'''
+Imports relevant packages
+'''
+import csv
+import time
+import twitter
+import pandas as pd
+
+'''
+Insert authorisation keys here
+'''
+consumer_key = 'Insert Consumer Key'
+consumer_secret = 'Insert Consumer Secret'
+access_token_key = 'Insert Access Token Key'
+access_token_secret = 'Insert Access Token Secret'
+
+api = twitter.Api(consumer_key,
+                  consumer_secret,
+                  access_token_key,
+                  access_token_secret,
+                  sleep_on_rate_limit=True)
+
+'''
+Identify Twitter user to scrape
+'''
+Usernames = ['Inser Usernames Here']
+
+'''
+Goes through each username listed and downloads their data
+'''
+for user in Usernames:
+    
+    # calls the Twitter api for all tweets from the username
+    t = api.GetUserTimeline(screen_name = user, count = 500)
+    tweets = [i.AsDict() for i in t]
+    
+    '''
+    Builds a dictionary to store specific features scraped from the user
+    '''
+
+    dict_ = {'user': [],
+             'date': [],
+             'text': [],
+             'name': [],
+             'geo_enabled': [],
+             'bounding box':[],
+             'language':[],
+             'hashtags':[],
+             'coord':[]
+            }
+
+    '''
+    Sifts through the data downloaded, pulls out, and adds the desired features
+    '''
+
+    for t in tweets:
+        dict_['date'].append(t['created_at'])
+        dict_['geo_enabled'].append(t['user']['geo_enabled'])
+        dict_['user'].append(t['user']['screen_name'])
+        dict_['name'].append(t['user']['name'])
+        dict_['text'].append(t['text'])
+        dict_['language'].append(t['lang'])
+        dict_['hashtags'].append(t['hashtags'])
+        if 'place' in t:
+            if t['place']['bounding_box']:
+                dict_['bounding box'].append(t['place']['bounding_box']['coordinates'])
+        else:
+            dict_['bounding box'].append('not shown')
+        if 'geo' in t:
+            dict_['coord'].append(t['geo']['coordinates'])
+        else:
+            dict_['coord'].append('not shown')
+            
+    '''
+    Structures the data for easy manipulation
+    '''
+    df = pd.DataFrame(dict_)
+
+    '''
+    Opens, writes into, and closes the user's file
+    '''
+    csvFile = open('%s.csv' % (user), 'a')
+
+    with open('%s.csv' % (user), 'a') as csvFile:
+        df.to_csv(csvFile, header=False)
+
+    csvFile.close()
