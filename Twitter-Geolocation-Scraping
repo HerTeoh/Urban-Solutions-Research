@@ -33,7 +33,8 @@ dict_ = {'user': [],
          'geo_enabled': [],
          'bounding box':[],
          'language':[],
-         'coordinates':[]
+         'coordinates':[],
+         'coord':[]
         }
 
 '''
@@ -52,6 +53,10 @@ for status in python_tweets.search(**query)['statuses']:
             dict_['bounding box'].append(status['place']['bounding_box']['coordinates'])
     else:
         dict_['bounding box'].append('not shown')
+    if status['geo'] != None:
+        dict_['coord'].append(status['geo']['coordinates'])
+    else:
+        dict_['coord'].append('not shown')
 
 '''
 Structures the data for easy manipulation
