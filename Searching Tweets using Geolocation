@@ -20,7 +20,8 @@ Insert search parameters here
 '''
 # geocode is currently set to Masjid Jamek in Kuala Lumpur, Malaysia
 query = {'geocode': '3.1489,101.6956,1km',
-         'count': 100
+         'count': 100,
+         'tweet_mode': 'extended'
         }
 
 '''
@@ -45,7 +46,7 @@ for status in python_tweets.search(**query)['statuses']:
     dict_['geo_enabled'].append(status['user']['geo_enabled'])
     dict_['user'].append(status['user']['screen_name'])
     dict_['name'].append(status['user']['name'])
-    dict_['text'].append(status['text'])
+    dict_['text'].append(status['full_text'])
     dict_['language'].append(status['lang'])
     dict_['coordinates'].append(status['coordinates'])
     if 'place' in status:
