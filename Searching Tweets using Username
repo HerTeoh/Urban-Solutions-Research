@@ -18,7 +18,8 @@ api = twitter.Api(consumer_key,
                   consumer_secret,
                   access_token_key,
                   access_token_secret,
-                  sleep_on_rate_limit=True)
+                  sleep_on_rate_limit=True,
+                  tweet_mode='extended')
 
 '''
 Identify Twitter user to scrape
@@ -58,7 +59,7 @@ for user in Usernames:
         dict_['geo_enabled'].append(t['user']['geo_enabled'])
         dict_['user'].append(t['user']['screen_name'])
         dict_['name'].append(t['user']['name'])
-        dict_['text'].append(t['text'])
+        dict_['text'].append(t['full_text'])
         dict_['language'].append(t['lang'])
         dict_['hashtags'].append(t['hashtags'])
         if 'place' in t:
