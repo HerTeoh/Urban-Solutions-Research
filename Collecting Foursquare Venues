@@ -1,0 +1,82 @@
+'''
+Imports necessary libraries
+'''
+import urllib
+from urllib import request
+from tqdm import tqdm
+import json
+import datetime
+import time
+import math
+from math import cos
+import pandas as pd
+from pandas import DataFrame
+from pandas.io.json import json_normalize
+
+'''
+Helper function for converting meters to lat/long
+'''
+def distcust(p, d, lat_m, long_m):
+    lat = p['lat']
+    long = p['long']
+
+    lat1 = lat + lat_m * (d / (11100.0/90*1000) * cos(lat))
+    long1 = long + long_m * (d / (11100.0/90*1000))
+
+    return {'lat': lat1, 'long': long1}
+
+'''
+Authorisation codes here
+'''
+client_id = "CLIENT ID"
+client_secret = "CLIENT SECRET"
+
+'''
+Search variables here
+'''
+p = {'lat': 3.1489, 'long': 101.6956} # Masjid Jamek, Kuala Lumpur, Malaysia Coordinates
+# distance for one side so we have a bounding box of distance*2 with p in the center
+distance = 100
+gridSize = 10
+df = DataFrame()
+limit = 3
+requested_keys = ["categories","id","location","name"]
+
+'''
+Iterate through lat/long to get venues
+'''
+for x in tqdm([x1 / 10.0 for x1 in range(-3*gridSize, 3*gridSize)]):
+    for y in [y1 / 10.0 for y1 in range(-3*gridSize, 3*gridSize)]:
+        center = distcust(p,distance,x,y)
+        url = 'https://api.foursquare.com/v2/venues/search?ll=%s,%s&client_id=%s&client_secret=%s&limit=%s&v=%s' % (center["lat"], center["long"], client_id, client_secret, limit, time.strftime("%Y%m%d"))
+
+        try:
+            req = urllib.request.Request(url)
+            response = request.urlopen(req)
+            data = json.loads(response.read())
+            response.close()
+            data = DataFrame(data["response"]['venues'])[requested_keys]
+
+            df = df.append(data,ignore_index=True)
+
+            print(center)
+            time.sleep(1) # stay within API limits
+        except Exception as e:
+            print(e)
+
+'''
+Removes all duplicates in the dataframe
+'''
+df = df.drop_duplicates(subset='id',keep='last')
+
+'''
+Formats items in the dataframe
+'''
+df = df[df['categories'].map(lambda d: len(d)) > 0]
+df["categories"] = df["categories"].apply(lambda x: dict(x[0])['name'])
+
+'''
+Orders it and creates a csv file for it
+'''
+ordered_df = df[["id","name","categories"]]
+ordered_df.to_csv("petronas_towers_d100g10.csv", encoding='utf-8', index=False)
